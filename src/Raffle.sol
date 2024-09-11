@@ -130,8 +130,12 @@ contract Raffle is VRFConsumerBaseV2Plus {
     // Added this because we inherited VRFConsumerBaseV2Plus ABSTRACT contract which had this undefined function which we need to define with an override to replace the virtual keyword
     // Used to define what are we going to do with the random number we get back
     function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
+        // CHECKS (Conditionals if/require statements as more gas efficient to revert at this stage)
+
         // EXAMPLE s_players = 10, rng = 131505 --- 131505 % 10 = 5 -- player at index 5 wins --- modulo provides me numbers 0-9 which includes 10 players
         // Index of randomWords is 0 as we are only getting one RNG back.
+
+        // EFFECTS (Internal Contract States)
         uint256 indexOfWinner = randomWords[0] % s_players.length;
         address payable recentWinner = s_players[indexOfWinner];
         s_recentWinner = recentWinner;
@@ -139,12 +143,15 @@ contract Raffle is VRFConsumerBaseV2Plus {
         // resets the s_players array to zero for the new raffle and updates timeStamp
         s_players = new address payable[](0);
         s_lastTimeStamp = block.timestamp;
+        emit WinnerPicked(s_recentWinner); // Best practise to put this in EFFECTS in the event an external contract interactions does change your storage variable
+
         // transfer funds in contract to the winner
+
+        // INTERACTIONS (External Contract Interactions)
         (bool success,) = recentWinner.call{value: address(this).balance}("");
         if (!success) {
             revert Raffle__TransferFailed();
         }
-        emit WinnerPicked(s_recentWinner);
     }
 
     /**
