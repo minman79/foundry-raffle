@@ -17,6 +17,7 @@ import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/V
 contract Raffle is VRFConsumerBaseV2Plus {
     /* ERRORS */
     error Raffle__SendMoreToEnterRaffle();
+    error Raffle__TransferFailed();
 
     /* STATE VARIABLE */
     // Made this immutable so we can define entranceFee when creating contracts
@@ -34,6 +35,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     // addresses array of players needs to be payable to pay the winners address
     address payable[] private s_players;
     uint256 private s_lastTimeStamp;
+    address private s_recentWinner;
 
     /* EVENTS */
     // 1. Makes migration easier
@@ -107,7 +109,17 @@ contract Raffle is VRFConsumerBaseV2Plus {
 
     // Added this because we inherited VRFConsumerBaseV2Plus ABSTRACT contract which had this undefined function which we need to define with an override to replace the virtual keyword
     // Used to define what are we going to do with the random number we get back
-    function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {}
+    function fulfillRandomWords(uint256 requestId, uint256[] calldata randomWords) internal override {
+        // EXAMPLE s_players = 10, rng = 131505 --- 131505 % 10 = 5 -- player at index 5 wins --- modulo provides me numbers 0-9 which includes 10 players
+        // Index of randomWords is 0 as we are only getting one RNG back.
+        uint256 indexOfWinner = randomWords[0] % s_players.length;
+        address payable recentWinner = s_players[indexOfWinner];
+        s_recentWinner = recentWinner;
+        (bool success,) = recentWinner.call{value: address(this).balance}("");
+        if (!success) {
+            revert Raffle__TransferFailed();
+        }
+    }
 
     /**
      * Getter Functions  (external so they can be used in other contracts)
