@@ -53,6 +53,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     // 2. Makes front end "indexing" easier
     // This event is a new player has entered our raffle which is indexed
     event RaffleEntered(address indexed player);
+    event WinnerPicked(address indexed winner);
 
     /* FUNCTIONS */
     // As VRFConsumerBaseV2Plus contract has a constructor parameter, using my constructor to get the vrfCoordinator address and pass it to their constructor
@@ -135,10 +136,15 @@ contract Raffle is VRFConsumerBaseV2Plus {
         address payable recentWinner = s_players[indexOfWinner];
         s_recentWinner = recentWinner;
         s_raffleState = RaffleState.OPEN;
+        // resets the s_players array to zero for the new raffle and updates timeStamp
+        s_players = new address payable[](0);
+        s_lastTimeStamp = block.timestamp;
+        // transfer funds in contract to the winner
         (bool success,) = recentWinner.call{value: address(this).balance}("");
         if (!success) {
             revert Raffle__TransferFailed();
         }
+        emit WinnerPicked(s_recentWinner);
     }
 
     /**
