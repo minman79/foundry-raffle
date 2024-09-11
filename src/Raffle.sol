@@ -18,10 +18,20 @@ contract Raffle is VRFConsumerBaseV2Plus {
     /* ERRORS */
     error Raffle__SendMoreToEnterRaffle();
     error Raffle__TransferFailed();
+    error Raffle__RaffleNotOpen();
 
-    /* STATE VARIABLE */
+    /* TYPE DECLARATIONs */
+    // Enums used to create custom finite types of 'constant values'
+    enum RaffleState {
+        OPEN, // 0 - players can enter the raffle
+        CALCULATING // 1 - calculating so players cannot enter raffle
+
+    }
+
+    /* STATE VARIABLES */
     // Made this immutable so we can define entranceFee when creating contracts
     // As it is private, created a getter function
+
     uint16 private constant REQUEST_CONFIRMATIONS = 3;
     uint32 private constant NUM_WORDS = 1;
     uint256 private immutable i_entranceFee;
@@ -36,6 +46,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     address payable[] private s_players;
     uint256 private s_lastTimeStamp;
     address private s_recentWinner;
+    RaffleState private s_raffleState;
 
     /* EVENTS */
     // 1. Makes migration easier
@@ -55,10 +66,12 @@ contract Raffle is VRFConsumerBaseV2Plus {
     ) VRFConsumerBaseV2Plus(vrfCoordinator) {
         i_entranceFee = entranceFee;
         i_interval = interval;
-        s_lastTimeStamp = block.timestamp;
         i_keyHash = gasLane;
         i_subscriptionId = subscriptionId;
         i_callbackGasLimit = callbackGasLimit;
+
+        s_lastTimeStamp = block.timestamp;
+        s_raffleState = RaffleState.OPEN; // or RaffleState(0)
     }
 
     // Needs to be payable to receive funds
@@ -72,6 +85,9 @@ contract Raffle is VRFConsumerBaseV2Plus {
         // Solidity ^0.8.4 Most gas efficient but harder to read than latest method - (default to this)
         if (msg.value < i_entranceFee) {
             revert Raffle__SendMoreToEnterRaffle();
+        }
+        if (s_raffleState != RaffleState.OPEN) {
+            revert Raffle__RaffleNotOpen();
         }
         // we need this payable as the array we are pushing it to is payable
         s_players.push(payable(msg.sender));
@@ -88,6 +104,9 @@ contract Raffle is VRFConsumerBaseV2Plus {
         if ((block.timestamp - s_lastTimeStamp) < i_interval) {
             revert();
         }
+
+        s_raffleState = RaffleState.CALCULATING;
+
         // Get our random number from Chainlink VRF v2.5 which is a 2 part process
         // 1. Request RNG (Random Number Generator)
         // 2. Get RNG
@@ -115,6 +134,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         uint256 indexOfWinner = randomWords[0] % s_players.length;
         address payable recentWinner = s_players[indexOfWinner];
         s_recentWinner = recentWinner;
+        s_raffleState = RaffleState.OPEN;
         (bool success,) = recentWinner.call{value: address(this).balance}("");
         if (!success) {
             revert Raffle__TransferFailed();
