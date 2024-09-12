@@ -13,7 +13,7 @@ import {VRFV2PlusClient} from "@chainlink/contracts/src/v0.8/vrf/dev/libraries/V
  * @dev Implements Chainlink VRFv2.5
  */
 
-// inherited all the functions from the VRFConsumerBaseV2Plus contract to use with ours
+// inherited all the functions from the VRFConsumerBaseV2Plus as it has the s_vrfCoordinator variable which we need to gain access to the requestRandomWords() to be able to pick our random winner
 contract Raffle is VRFConsumerBaseV2Plus {
     /* ERRORS */
     error Raffle__SendMoreToEnterRaffle();
