@@ -21,6 +21,9 @@ contract RaffleTest is Test {
     address public PLAYER = makeAddr("player");
     uint256 public constant STARTING_PLAYER_BALANCE = 10 ether;
 
+    event RaffleEntered(address indexed player); // have to copy paste any events to the top of our Test contract
+    event WinnerPicked(address indexed winner);
+
     function setUp() external {
         DeployRaffle deployer = new DeployRaffle();
         (raffle, helperConfig) = deployer.deployContract();
@@ -56,4 +59,14 @@ contract RaffleTest is Test {
         address playerRecorded = raffle.getPlayer(0);
         assert(playerRecorded == PLAYER);
     }
+
+    // function testEnteringRaffleEmitsEvent() public {
+    //     // ARRANGE
+    //     vm.prank(PLAYER);
+    //     // ASSET
+    //     vm.expectEmit(true, false, false, false, address(raffle)); // first three refers to indexed parameters (topics), and last false for non-indexed which we have none, and it is the address of the raffle which is going to be emitting this
+    //     emit RaffleEntered(PLAYER);  // emit RaffleEntered(address(0)); would fail as it will expect 0X00000.. as raffle has not been run
+    //     // ACT
+    //     raffle.enterRaffle{value: entranceFee}();
+    // }
 }
