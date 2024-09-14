@@ -53,7 +53,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     // 1. Makes migration easier
     // 2. Makes front end "indexing" easier
     // This event is a new player has entered our raffle which is indexed
-    event RaffleEntered(address indexed player);
+    event RaffleEntered(address indexed player); // can only have maximum of 3 indexed events called topics
     event WinnerPicked(address indexed winner);
 
     /* FUNCTIONS */

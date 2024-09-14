@@ -60,13 +60,27 @@ contract RaffleTest is Test {
         assert(playerRecorded == PLAYER);
     }
 
-    // function testEnteringRaffleEmitsEvent() public {
-    //     // ARRANGE
-    //     vm.prank(PLAYER);
-    //     // ASSET
-    //     vm.expectEmit(true, false, false, false, address(raffle)); // first three refers to indexed parameters (topics), and last false for non-indexed which we have none, and it is the address of the raffle which is going to be emitting this
-    //     emit RaffleEntered(PLAYER);  // emit RaffleEntered(address(0)); would fail as it will expect 0X00000.. as raffle has not been run
-    //     // ACT
-    //     raffle.enterRaffle{value: entranceFee}();
-    // }
+    function testEnteringRaffleEmitsEvent() public {
+        // ARRANGE
+        vm.prank(PLAYER);
+        // ASSET
+        vm.expectEmit(true, false, false, false, address(raffle)); // first three refers to indexed parameters (topics), and last false for non-indexed which we have none, and it is the address of the raffle which is going to be emitting this
+        emit RaffleEntered(PLAYER); // emit RaffleEntered(address(0)); would fail as it will expect 0X00000.. as raffle has not been run
+        // ACT
+        raffle.enterRaffle{value: entranceFee}();
+    }
+
+    function testDontAllowplayersToEnterWhileRaffleIsCalculating() public {
+        // ARRANGE
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1); // This warps the time forward to our position of +30 as per interval required
+        vm.roll(block.number + 1); // This rolls the block to the next block
+        raffle.performUpkeep("");
+
+        // ACT  / ASSET
+        vm.expectRevert(Raffle.Raffle__RaffleNotOpen.selector);
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+    }
 }
