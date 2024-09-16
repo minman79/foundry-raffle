@@ -1,0 +1,5 @@
+RaffleTest:testDontAllowplayersToEnterWhileRaffleIsCalculating() (gas: 102758)
+RaffleTest:testEnteringRaffleEmitsEvent() (gas: 68692)
+RaffleTest:testRaffleInitializesInOpenState() (gas: 7751)
+RaffleTest:testRaffleRecordsPlayersWhenTheyEnter() (gas: 68315)
+RaffleTest:testRaffleRevertsWhenYouDontPayEnough() (gas: 10865)
