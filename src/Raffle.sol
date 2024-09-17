@@ -55,6 +55,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
     // This event is a new player has entered our raffle which is indexed
     event RaffleEntered(address indexed player); // can only have maximum of 3 indexed events called topics
     event WinnerPicked(address indexed winner);
+    event RequestedRaffleWinner(uint256 indexed requestId);
 
     /* FUNCTIONS */
     // As VRFConsumerBaseV2Plus contract has a constructor parameter, using my constructor to get the vrfCoordinator address and pass it to their constructor
@@ -140,7 +141,7 @@ contract Raffle is VRFConsumerBaseV2Plus {
         // 1. Request RNG (Random Number Generator)
         // 2. Get RNG
         // copied from https://docs.chain.link/vrf/v2-5/getting-started, so need to import the contract
-        VRFV2PlusClient.RandomWordsRequest({
+        VRFV2PlusClient.RandomWordsRequest memory request = VRFV2PlusClient.RandomWordsRequest({
             keyHash: i_keyHash, // maximum gas price (wei) I am willing to pay
             subId: i_subscriptionId, // SubId that this contract uses for funding requests
             requestConfirmations: REQUEST_CONFIRMATIONS, // No. of confirmation Chainlink node should wait till responding. Higher == more secure. Default is 3
@@ -151,6 +152,8 @@ contract Raffle is VRFConsumerBaseV2Plus {
                 VRFV2PlusClient.ExtraArgsV1({nativePayment: false})
             )
         });
+        uint256 requestId = s_vrfCoordinator.requestRandomWords(request);
+        emit RequestedRaffleWinner(requestId);
     }
 
     // Added this because we inherited VRFConsumerBaseV2Plus ABSTRACT contract which had this undefined function which we need to define with an override to replace the virtual keyword
