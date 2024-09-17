@@ -45,7 +45,7 @@ contract RaffleTest is Test {
     function testRaffleRevertsWhenYouDontPayEnough() public {
         // ARRANGE
         vm.prank(PLAYER);
-        // ACT / ASSET
+        // ACT / ASSERT
         vm.expectRevert(Raffle.Raffle__SendMoreToEnterRaffle.selector);
         raffle.enterRaffle();
     }
@@ -55,7 +55,7 @@ contract RaffleTest is Test {
         vm.prank(PLAYER);
         // ACT
         raffle.enterRaffle{value: entranceFee}();
-        // ASSET
+        // ASSERT
         address playerRecorded = raffle.getPlayer(0);
         assert(playerRecorded == PLAYER);
     }
@@ -63,7 +63,7 @@ contract RaffleTest is Test {
     function testEnteringRaffleEmitsEvent() public {
         // ARRANGE
         vm.prank(PLAYER);
-        // ASSET
+        // ASSERT
         vm.expectEmit(true, false, false, false, address(raffle)); // first three refers to indexed parameters (topics), and last false for non-indexed which we have none, and it is the address of the raffle which is going to be emitting this
         emit RaffleEntered(PLAYER); // emit RaffleEntered(address(0)); would fail as it will expect 0X00000.. as raffle has not been run
         // ACT
@@ -78,7 +78,7 @@ contract RaffleTest is Test {
         vm.roll(block.number + 1); // This rolls the block to the next block
         raffle.performUpkeep("");
 
-        // ACT  / ASSET
+        // ACT  / ASSERT
         vm.expectRevert(Raffle.Raffle__RaffleNotOpen.selector);
         vm.prank(PLAYER);
         raffle.enterRaffle{value: entranceFee}();
@@ -95,7 +95,7 @@ contract RaffleTest is Test {
         // ACT
         (bool upkeepNeeded,) = raffle.checkUpkeep("");
 
-        // ASSET
+        // ASSERT
         assert(!upkeepNeeded);
     }
 
@@ -110,7 +110,7 @@ contract RaffleTest is Test {
         // ACT
         (bool upkeepNeeded,) = raffle.checkUpkeep("");
 
-        // ASSET
+        // ASSERT
         assert(!upkeepNeeded);
     }
 
@@ -123,7 +123,7 @@ contract RaffleTest is Test {
         // ACT
         (bool upkeepNeeded,) = raffle.checkUpkeep("");
 
-        // ASSET
+        // ASSERT
         assert(!upkeepNeeded);
     }
 
@@ -137,7 +137,40 @@ contract RaffleTest is Test {
         // ACT
         (bool upkeepNeeded,) = raffle.checkUpkeep("");
 
-        // ASSET
+        // ASSERT
         assert(upkeepNeeded);
+    }
+
+    /*/////////////////////////////////////////////////////////////////
+                           PERFORM UPKEEP
+    /////////////////////////////////////////////////////////////////*/
+
+    function testPerformUpkeepCanOnlyRunIfCheckUpkeepIsTrue() public {
+        // ARRANGE
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        vm.warp(block.timestamp + interval + 1);
+        vm.roll(block.number + 1);
+
+        // ACT /ASSERT
+        raffle.performUpkeep("");
+    }
+
+    function testPerformUpkeepRevertsIfCheckUpkeepIsFalse() public {
+        // ARRANGE
+        uint256 currentBalance = 0;
+        uint256 numPlayers = 0;
+        Raffle.RaffleState rState = raffle.getRaffleState();
+
+        vm.prank(PLAYER);
+        raffle.enterRaffle{value: entranceFee}();
+        currentBalance = currentBalance + entranceFee;
+        numPlayers = 1;
+
+        // ACT  / ASSERT
+        vm.expectRevert(
+            abi.encodeWithSelector(Raffle.Raffle__UpkeepNotNeeded.selector, currentBalance, numPlayers, rState)
+        );
+        raffle.performUpkeep("");
     }
 }
