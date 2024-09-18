@@ -29,6 +29,7 @@ contract HelperConfig is CodeConstants, Script {
         uint256 subscriptionId;
         uint32 callbackGasLimit;
         address link;
+        address account;
     }
 
     NetworkConfig public localNetworkConfig;
@@ -61,7 +62,8 @@ contract HelperConfig is CodeConstants, Script {
             gasLane: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae, // same doc - 100 gwei Key Hash
             subscriptionId: 37907328715758980123468464879429672116602193591716118994906997816392223095186, // Got this from the vrf.chain.link after creating My Own Subscription
             callbackGasLimit: 500000, // 500,000 gas
-            link: 0x779877A7B0D9E8603169DdbD7836e478b4624789
+            link: 0x779877A7B0D9E8603169DdbD7836e478b4624789,
+            account: 0x8c8632370488cDB75eBc15cE6770d4F60CeE34f7 // Public key to an burner wallet
         });
     }
 
@@ -85,7 +87,8 @@ contract HelperConfig is CodeConstants, Script {
             gasLane: 0x787d74caea10b2b357790d5b5247c2f63d1d91572a9846f780606e4d953677ae, // doesnt matter, could be anything
             subscriptionId: 0, // might need to fix this
             callbackGasLimit: 500000,
-            link: address(linkToken)
+            link: address(linkToken),
+            account: 0x1804c8AB1F12E6bbf3894d4083f33e07309d1f38 // taken from the Base.sol contract --- foundry default address for tx.origin and msg.sender
         });
         return localNetworkConfig;
     }

@@ -1,0 +1,31 @@
+# Query: vm.startBroadcast();
+# ContextLines: 1
+
+6 results - 3 files
+
+script/DeployRaffle.s.sol:
+  31  
+  32:         vm.startBroadcast();
+  33          Raffle raffle = new Raffle(
+
+script/HelperConfig.s.sol:
+  76          // Deploy mocks and such
+  77:         vm.startBroadcast();
+  78          VRFCoordinatorV2_5Mock vrfCoordinatorMock =
+
+script/Interactions.s.sol:
+  20          console.log("Creating subscription on chain Id: ", block.chainid);
+  21:         vm.startBroadcast();
+  22          uint256 subbId = VRFCoordinatorV2_5Mock(vrfCoordinator).createSubscription(); // running this creates a Mock chainlink subscription
+
+  51          if (block.chainid == LOCAL_CHAIN_ID) {
+  52:             vm.startBroadcast();
+  53              VRFCoordinatorV2_5Mock(vrfCoordinator).fundSubscription(subscriptionId, FUND_AMOUNT * 100); // Had to *100 due to erroring when performing testFulfillrandomWordsPicksAWinnerResetsAndSendsMoney() due to insufficient funds
+
+  55          } else {
+  56:             vm.startBroadcast();
+  57              LinkToken(linkToken).transferAndCall(vrfCoordinator, FUND_AMOUNT, abi.encode(subscriptionId));
+
+  78          console.log("On ChainId: ", block.chainid);
+  79:         vm.startBroadcast();
+  80          VRFCoordinatorV2_5Mock(vrfCoordinator).addConsumer(subId, contractToAddToVrf);

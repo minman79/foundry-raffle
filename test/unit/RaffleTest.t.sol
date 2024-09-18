@@ -5,11 +5,11 @@ pragma solidity 0.8.19;
 import {Test, console} from "forge-std/Test.sol";
 import {DeployRaffle} from "script/DeployRaffle.s.sol";
 import {Raffle} from "src/Raffle.sol";
-import {HelperConfig} from "script/HelperConfig.s.sol";
+import {HelperConfig, CodeConstants} from "script/HelperConfig.s.sol";
 import {Vm} from "forge-std/Vm.sol";
 import {VRFCoordinatorV2_5Mock} from "@chainlink/contracts/src/v0.8/vrf/mocks/VRFCoordinatorV2_5Mock.sol";
 
-contract RaffleTest is Test {
+contract RaffleTest is Test, CodeConstants {
     Raffle public raffle;
     HelperConfig public helperConfig;
 
@@ -25,6 +25,11 @@ contract RaffleTest is Test {
 
     event RaffleEntered(address indexed player); // have to copy paste any events to the top of our Test contract
     event WinnerPicked(address indexed winner);
+
+    function testEntranceFeeIsCorrect() public view {
+        uint256 raffleEntranceFee = raffle.getEntranceFee();
+        assert(raffleEntranceFee == entranceFee);
+    }
 
     function setUp() external {
         DeployRaffle deployer = new DeployRaffle();
@@ -202,13 +207,24 @@ contract RaffleTest is Test {
                            FULFILLRANDOMWORDS
     /////////////////////////////////////////////////////////////////*/
 
-    function testFulfillrandomWordsCanOnlyBeCalledAfterPerformUpkeep(uint256 randomRequestId) public raffleEntered {
+    modifier skipFork() {
+        if (block.chainid != LOCAL_CHAIN_ID) {
+            return;
+        }
+        _;
+    }
+
+    function testFulfillrandomWordsCanOnlyBeCalledAfterPerformUpkeep(uint256 randomRequestId)
+        public
+        raffleEntered
+        skipFork
+    {
         // ARRANGE   / ACT   / ASSERT
         vm.expectRevert(VRFCoordinatorV2_5Mock.InvalidRequest.selector);
         VRFCoordinatorV2_5Mock(vrfCoordinator).fulfillRandomWords(randomRequestId, address(raffle));
     }
 
-    function testFulfillrandomWordsPicksAWinnerResetsAndSendsMoney() public raffleEntered {
+    function testFulfillrandomWordsPicksAWinnerResetsAndSendsMoney() public raffleEntered skipFork {
         // ARRANGE
         uint256 additionalEntrants = 3; // 4 people in total will enter this raffle
         uint256 startingIndex = 1;
